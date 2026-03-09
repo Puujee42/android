@@ -12,8 +12,15 @@ export default function MobileHero() {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const nextSlide = useCallback(() => {
+        if (banners.length === 0) return;
         setCurrentIndex((prevIndex) => (prevIndex + 1) % banners.length);
-    }, []);
+    }, [banners.length]);
+
+    useEffect(() => {
+        if (currentIndex >= banners.length && banners.length > 0) {
+            setCurrentIndex(0);
+        }
+    }, [banners.length, currentIndex]);
 
     useEffect(() => {
         fetch('/api/banners')
@@ -50,8 +57,8 @@ export default function MobileHero() {
                             className="absolute inset-0 w-full h-full"
                         >
                             <Image
-                                src={banners[currentIndex].image}
-                                alt={banners[currentIndex].title || `Banner ${currentIndex + 1}`}
+                                src={banners[currentIndex]?.image || ''}
+                                alt={banners[currentIndex]?.title || `Banner ${currentIndex + 1}`}
                                 fill
                                 priority
                                 className="object-cover"

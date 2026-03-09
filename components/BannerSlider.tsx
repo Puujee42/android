@@ -15,14 +15,22 @@ export default function BannerSlider() {
   const [isHovered, setIsHovered] = useState(false);
 
   const nextSlide = useCallback(() => {
+    if (banners.length === 0) return;
     setDirection(1);
     setCurrentIndex((prevIndex) => (prevIndex + 1) % banners.length);
-  }, []);
+  }, [banners.length]);
 
   const prevSlide = useCallback(() => {
+    if (banners.length === 0) return;
     setDirection(-1);
     setCurrentIndex((prevIndex) => (prevIndex - 1 + banners.length) % banners.length);
-  }, []);
+  }, [banners.length]);
+
+  useEffect(() => {
+    if (currentIndex >= banners.length && banners.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [banners.length, currentIndex]);
 
   useEffect(() => {
     fetch('/api/banners')
@@ -103,8 +111,8 @@ export default function BannerSlider() {
             }}
           >
             <Image
-              src={banners[currentIndex].image}
-              alt={banners[currentIndex].title || `Banner ${currentIndex + 1}`}
+              src={banners[currentIndex]?.image || ''}
+              alt={banners[currentIndex]?.title || `Banner ${currentIndex + 1}`}
               fill
               priority
               className="object-cover"
