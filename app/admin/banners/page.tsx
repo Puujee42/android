@@ -117,7 +117,6 @@ export default function BannerAdminPage() {
     const saveNewOrder = async () => {
         setIsSavingOrder(true);
         try {
-            // Sequential updates for simplicity. A bulk update endpoint is preferred for production.
             await Promise.all(banners.map((b, idx) =>
                 fetch(`/api/banners/${b.id}`, {
                     method: 'PATCH',
@@ -162,7 +161,7 @@ export default function BannerAdminPage() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Зураг оруулах <span className="text-red-500">*</span></label>
                                 <CldUploadWidget
-                                    uploadPreset="ml_default" // Use your Cloudinary upload preset name here
+                                    uploadPreset="ml_default"
                                     onSuccess={(result) => {
                                         if (typeof result.info === 'object' && 'secure_url' in result.info) {
                                             setNewBanner({ ...newBanner, image: result.info.secure_url });
