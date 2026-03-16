@@ -171,7 +171,54 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* List */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+
+                {/* MOBILE CARD LIST — md-с дээш нуугдана */} 
+                <div className="md:hidden space-y-3"> 
+                  {loading ? ( 
+                    <div className="py-12 text-center"> 
+                      <Loader2 className="w-6 h-6 animate-spin text-amber-500 mx-auto" /> 
+                    </div> 
+                  ) : filteredProducts.map((product: any) => ( 
+                    <div key={product._id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4"> 
+                      <div className="flex gap-3 items-start"> 
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 shrink-0"> 
+                          {product.image && <img src={product.image} alt="" className="w-full h-full object-cover" />} 
+                        </div> 
+                        <div className="flex-1 min-w-0"> 
+                          <p className="font-bold text-white text-sm leading-tight line-clamp-2">{product.name}</p> 
+                          <p className="text-xs text-slate-500 mt-0.5">{product.category}</p> 
+                          <p className="font-black text-amber-500 text-sm mt-1">{formatPrice(product.price)}</p> 
+                        </div> 
+                        <div className="flex flex-col gap-1.5 shrink-0"> 
+                          <Link href={`/admin/products/${product._id}`} 
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors"> 
+                            <Pencil className="w-4 h-4" /> 
+                          </Link> 
+                          <button onClick={() => handleDelete(product._id)} 
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-red-400 transition-colors"> 
+                            <Trash2 className="w-4 h-4" /> 
+                          </button> 
+                        </div> 
+                      </div> 
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-800"> 
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${product.stockStatus === 'in-stock' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}> 
+                          {product.stockStatus === 'in-stock' ? '● Бэлэн' : '○ Захиалга'} 
+                        </span> 
+                        <span className="text-xs text-slate-500">Үлд: {product.inventory ?? 0}ш</span> 
+                        <button 
+                          onClick={() => handleToggleFeatured(product)} 
+                          disabled={togglingFeatured === product._id} 
+                          className={`ml-auto text-xs font-bold px-2 py-1 rounded-lg transition-colors ${product.featured ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-500'}`} 
+                        > 
+                          {togglingFeatured === product._id ? <Loader2 className="w-3 h-3 animate-spin" /> : product.featured ? '⭐ Онцгой' : 'Онцгой болгох'} 
+                        </button> 
+                      </div> 
+                    </div> 
+                  ))} 
+                </div> 
+
+                {/* DESKTOP TABLE — mobile-д нуугдана */} 
+                <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>

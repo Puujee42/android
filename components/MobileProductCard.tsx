@@ -105,7 +105,7 @@ export default function MobileProductCard({ product }: MobileProductCardProps) {
                                         duration: 1500,
                                     });
                                 }}
-                                className="w-10 h-10 flex items-center justify-center bg-[#FF5000] text-white rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+                                className="w-10 h-10 flex items-center justify-center bg-[#FF5000] text-white rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
                             >
                                 <ShoppingCart className="w-5 h-5" strokeWidth={1.2} />
                             </motion.button>

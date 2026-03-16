@@ -617,9 +617,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: 'qpay', icon: '📱', label: 'QR кодоор', title: 'QPay' },
-                    { id: 'socialpay', icon: '💙', label: 'Голомт банк', title: 'SocialPay' },
-                    { id: 'card', icon: '💳', label: 'Visa/Mastercard', title: 'Банкны карт' },
-                    { id: 'cash', icon: '💵', label: 'Хүргэлтийн үед', title: 'Бэлнээр' },
+                    { id: 'bank', icon: '🏦', label: 'Хаан банк', title: 'Дансаар' },
                   ].map((method) => (
                     <button
                       key={method.id}
@@ -642,12 +640,34 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                {paymentMethod === 'qpay' && (
-                  <div className="mt-3 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 flex flex-col items-center justify-center text-center">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                      <span className="text-xl">📱</span>
+                {paymentMethod === 'bank' && (
+                  <div className="mt-3 p-4 border-2 border-dashed border-orange-200 rounded-xl bg-orange-50 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">🏦</span>
+                      <p className="text-sm font-bold text-gray-900">Банкны шилжүүлэг</p>
                     </div>
-                    <p className="text-xs font-bold text-gray-500">QPay QR - Тун удахгүй нэмэгдэнэ</p>
+                    <div className="space-y-1.5 text-xs text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Банк:</span>
+                        <span className="font-bold text-gray-900">Хаан банк</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>IBAN:</span>
+                        <span className="font-bold text-gray-900">MN83000500</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Данс:</span>
+                        <span className="font-bold text-gray-900">5664240180</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Хүлээн авагч:</span>
+                        <span className="font-bold text-gray-900">Battogtokh khukhuu</span>
+                      </div>
+                      <div className="flex justify-between pt-1 border-t border-orange-100">
+                        <span>Гүйлгээний утга:</span>
+                        <span className="font-black text-orange-600">Утасны дугаараа бичнэ үү</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

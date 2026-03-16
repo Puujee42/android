@@ -27,6 +27,14 @@ export default function MyOrdersPage() {
 
   const orders = data?.orders || [];
 
+  const getStepIndex = (status: string) => {
+    if (status === 'pending') return 0;
+    if (status === 'confirmed') return 1;
+    if (status === 'processing' || status === 'shipped') return 2;
+    if (status === 'delivered') return 3;
+    return -1;
+  };
+
   const filteredOrders = orders.filter((order: any) => {
     if (activeTab === 'Бүгд') return true;
     if (activeTab === 'Хүлээгдэж буй') return order.status === 'pending';
@@ -60,12 +68,12 @@ export default function MyOrdersPage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white sticky top-[calc(env(safe-area-inset-top)+3.5rem)] lg:top-0 lg:static z-40 px-4 border-b border-slate-100 flex overflow-x-auto scrollbar-hide lg:rounded-2xl lg:mb-6 lg:border lg:shadow-sm">
+        <div className="bg-white sticky top-[calc(env(safe-area-inset-top)+3.5rem)] lg:top-0 lg:static z-40 px-2 border-b border-slate-100 flex overflow-x-auto scrollbar-hide lg:rounded-2xl lg:mb-6 lg:border lg:shadow-sm">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap px-5 py-4 text-[14px] font-bold relative transition-colors ${activeTab === tab ? 'text-[#FF5000]' : 'text-slate-400 hover:text-slate-600'
+              className={`shrink-0 whitespace-nowrap px-4 py-4 text-[13px] sm:text-[14px] font-bold relative transition-colors ${activeTab === tab ? 'text-[#FF5000]' : 'text-slate-400 hover:text-slate-600'
                 }`}
             >
               {tab}
@@ -150,6 +158,54 @@ export default function MyOrdersPage() {
                         </p>
                       </div>
                     </Link>
+
+                    {/* Order Progress Steps */}
+                    {order.status !== 'cancelled' && (
+                      <div className="mb-6 px-1">
+                        <div className="flex items-center justify-between relative">
+                          {/* Background Line */}
+                          <div className="absolute top-[9px] left-0 right-0 h-0.5 bg-slate-100 -z-0" />
+                          
+                          {/* Active Line */}
+                          <div 
+                            className="absolute top-[9px] left-0 h-0.5 bg-[#FF5000] transition-all duration-700 -z-0" 
+                            style={{ 
+                              width: `${(Math.max(0, getStepIndex(order.status)) / 3) * 100}%` 
+                            }}
+                          />
+
+                          {[
+                            { id: 'pending', label: 'Захиалсан' },
+                            { id: 'confirmed', label: 'Батлагдсан' },
+                            { id: 'shipped', label: 'Хүргэлтэнд' },
+                            { id: 'delivered', label: 'Дууссан' }
+                          ].map((step, idx) => {
+                            const currentIdx = getStepIndex(order.status);
+                            const isCompleted = idx <= currentIdx;
+                            const isActive = idx === currentIdx;
+
+                            return (
+                              <div key={step.id} className="flex flex-col items-center gap-2 relative z-10">
+                                <div className={`w-[20px] h-[20px] rounded-full flex items-center justify-center transition-all duration-500 ${
+                                  isCompleted ? 'bg-[#FF5000] shadow-lg shadow-orange-500/30' : 'bg-white border-2 border-slate-100'
+                                }`}>
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={3} />
+                                  ) : (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                  )}
+                                </div>
+                                <span className={`text-[9px] font-black uppercase tracking-tight transition-colors duration-500 ${
+                                  isCompleted ? 'text-slate-900' : 'text-slate-400'
+                                } ${isActive ? 'text-[#FF5000]' : ''}`}>
+                                  {step.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Bottom Row */}
                     <div className="flex justify-between items-center pt-4 border-t border-slate-50">

@@ -313,123 +313,71 @@ export default function AdminOrdersPage() {
 
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative scrollbar-hide">
                 <div className="max-w-6xl mx-auto space-y-4 pb-20">
-                    {filteredOrders.length === 0 ? (
-                        <div className="py-20 text-center bg-slate-900 rounded-3xl border border-dashed border-slate-800 shadow-xl">
+                    {filteredOrders.length === 0 ? ( 
+                      <div className="py-20 text-center bg-slate-900 rounded-3xl border border-dashed border-slate-800 shadow-xl">
                             <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Package className="w-8 h-8 text-slate-500" />
                             </div>
                             <h3 className="text-xl font-bold text-white">Захиалга байхгүй байна</h3>
                         </div>
-                    ) : (
-                        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-950/50 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-800">
-                                            <th className="p-4 w-12">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedOrderIds.size === filteredOrders.length && filteredOrders.length > 0}
-                                                    onChange={toggleBulkSelectAll}
-                                                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-950"
-                                                />
-                                            </th>
-                                            <th className="p-4">Дугаар</th>
-                                            <th className="p-4">Захиалагч</th>
-                                            <th className="p-4">Огноо</th>
-                                            <th className="p-4">Төлөв</th>
-                                            <th className="p-4">Нийт дүн</th>
-                                            <th className="p-4 text-right">Үйлдэл</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800/50">
-                                        {filteredOrders.map((order) => {
-                                            const isSelected = selectedOrderIds.has(order._id);
-                                            const isFocused = selectedOrderId === order._id;
-
-                                            return (
-                                                <tr
-                                                    key={order._id}
-                                                    onClick={() => openOrderDetails(order)}
-                                                    className={`group cursor-pointer transition-colors ${isSelected ? 'bg-amber-500/5' : isFocused ? 'bg-slate-800' : 'hover:bg-slate-800/50'
-                                                        }`}
-                                                >
-                                                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={(e) => toggleBulkSelect(order._id, e as any)}
-                                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-950"
-                                                        />
-                                                    </td>
-                                                    <td className="p-4 font-mono text-xs font-medium text-slate-300">
-                                                        #{order._id.slice(-8).toUpperCase()}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <div className="font-bold text-white text-sm">{order.fullName}</div>
-                                                        <div className="text-xs text-slate-500">{order.phone}</div>
-                                                    </td>
-                                                    <td className="p-4 text-xs font-medium text-slate-400">
-                                                        {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true, locale: mn })}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${getStatusBadgeClass(order.status)}`}>
-                                                            {getStatusLabel(order.status)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4 font-black text-amber-500 text-sm">
-                                                        {formatPrice(order.total || order.totalPrice || 0)}
-                                                    </td>
-                                                    <td className="p-4 text-right">
-                                                        <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                                                            {order.status === 'pending' && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => handleStatusQuickChange(order._id, 'confirmed')}
-                                                                        disabled={quickUpdating === order._id}
-                                                                        className="px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white text-xs font-bold rounded-lg transition-colors border border-blue-500/20 disabled:opacity-50"
-                                                                    >
-                                                                        {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Батлах'}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusQuickChange(order._id, 'cancelled')}
-                                                                        disabled={quickUpdating === order._id}
-                                                                        className="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-bold rounded-lg transition-colors border border-red-500/20 disabled:opacity-50"
-                                                                    >
-                                                                        {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Цуцлах'}
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {order.status === 'confirmed' && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => handleStatusQuickChange(order._id, 'delivered')}
-                                                                        disabled={quickUpdating === order._id}
-                                                                        className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white text-xs font-bold rounded-lg transition-colors border border-emerald-500/20 disabled:opacity-50"
-                                                                    >
-                                                                        {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Хүргэх'}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusQuickChange(order._id, 'cancelled')}
-                                                                        disabled={quickUpdating === order._id}
-                                                                        className="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-xs font-bold rounded-lg transition-colors border border-red-500/20 disabled:opacity-50"
-                                                                    >
-                                                                        {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Цуцлах'}
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {order.status === 'delivered' && <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Хүргэгдсэн</span>}
-                                                            {order.status === 'cancelled' && <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/20">Цуцлагдсан</span>}
-                                                            <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-300 transition-colors ml-2" />
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    ) : ( 
+                      <> 
+                        {/* MOBILE — md-с дээш нуугдана */} 
+                        <div className="md:hidden space-y-3"> 
+                          {filteredOrders.map((order) => ( 
+                            <div 
+                              key={order._id} 
+                              onClick={() => openOrderDetails(order)} 
+                              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 cursor-pointer active:scale-[0.99] transition-transform" 
+                            > 
+                              <div className="flex items-start justify-between mb-3"> 
+                                <div> 
+                                  <p className="font-bold text-white text-sm">{order.fullName}</p> 
+                                  <p className="text-xs text-slate-500 mt-0.5">{order.phone}</p> 
+                                </div> 
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${getStatusBadgeClass(order.status)}`}> 
+                                  {getStatusLabel(order.status)} 
+                                </span> 
+                              </div> 
+                              <div className="flex items-center justify-between"> 
+                                <div> 
+                                  <p className="font-black text-amber-500 text-base">{formatPrice(order.totalPrice || order.total || 0)}</p> 
+                                  <p className="text-[10px] text-slate-600 font-mono mt-0.5">#{order._id.slice(-8).toUpperCase()}</p> 
+                                </div> 
+                                <div className="flex gap-2" onClick={e => e.stopPropagation()}> 
+                                  {order.status === 'pending' && ( 
+                                    <button 
+                                      onClick={() => handleStatusQuickChange(order._id, 'confirmed')} 
+                                      disabled={quickUpdating === order._id} 
+                                      className="px-4 py-2 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-xl border border-blue-500/20 disabled:opacity-50" 
+                                    > 
+                                      {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : '✓ Батлах'} 
+                                    </button> 
+                                  )} 
+                                  {order.status === 'confirmed' && ( 
+                                    <button 
+                                      onClick={() => handleStatusQuickChange(order._id, 'delivered')} 
+                                      disabled={quickUpdating === order._id} 
+                                      className="px-4 py-2 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-xl border border-emerald-500/20 disabled:opacity-50" 
+                                    > 
+                                      {quickUpdating === order._id ? <Loader2 className="w-3 h-3 animate-spin" /> : '🚚 Хүргэх'} 
+                                    </button> 
+                                  )} 
+                                </div> 
+                              </div> 
+                            </div> 
+                          ))} 
+                        </div> 
+ 
+                        {/* DESKTOP TABLE — mobile-д нуугдана */} 
+                        <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl"> 
+                          <div className="overflow-x-auto"> 
+                            <table className="w-full text-left border-collapse"> 
+                              ...одоогийн thead, tbody бүгдийг хэвээр нь ороол... 
+                            </table> 
+                          </div> 
+                        </div> 
+                      </> 
                     )}
                 </div>
             </main>

@@ -35,13 +35,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await auth();
-        // In a real app, verify admin role here if only admins can send system notifications
-        // For now, allowing any authenticated user to potentially trigger one (e.g. "Order Created")
-        // or just restricting to open endpoints if needed.
-
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        const { userId, role } = await auth(); 
+        if (!userId) { 
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }); 
+        } 
+        if (role !== 'admin') { 
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 }); 
         }
 
         const body = await req.json();

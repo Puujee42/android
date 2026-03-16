@@ -56,6 +56,21 @@ export async function PUT(req: NextRequest) {
 
         const ordersCollection = await getCollection('orders');
 
+        const allowedStatuses = ['confirmed', 'processing']; 
+        if (!allowedStatuses.includes(status)) { 
+            return NextResponse.json({ 
+                error: `Зөвхөн дараах статус боломжтой: ${allowedStatuses.join(', ')}` 
+            }, { status: 400 }); 
+        } 
+
+        const order = await ordersCollection.findOne({ 
+            _id: new ObjectId(orderId), 
+            'items.vendorId': userId 
+        }); 
+        if (!order) { 
+            return NextResponse.json({ error: 'Захиалга олдсонгүй' }, { status: 404 }); 
+        }
+
         // Note: In a multi-vendor system, an order status might be complex. 
         // Here we update the main order status if the vendor is processing it.
         // In a more advanced system, we'd have sub-order statuses.

@@ -206,7 +206,7 @@ export async function POST(req: Request) {
             page: z.string().describe('The page to navigate to (home, cart, orders, checkout, profile, wishlist). REQUIRED.'),
           }),
           execute: async ({ page }: { page: string }) => {
-            console.log('Executing navigateToPage tool with args:', { page });
+
             if (!page) return 'Error: page argument is missing.';
 
             let path = '/';
@@ -269,7 +269,7 @@ export async function POST(req: Request) {
                   { category: { $regex: regex } }
                 ]
               }).limit(5).toArray();
-              console.log(`Found ${products.length} products for query "${query}"`);
+              
               return products.map(p => ({
                 id: p._id.toString(),
                 name: p.name,

@@ -51,11 +51,13 @@ export default function CategoriesPage() {
 
   const { scrollY } = useScroll();
 
-  // Apple-style smooth interpolations
-  const headerPadding = useTransform(scrollY, [0, 80], ['1.5rem', '0.75rem']); // p-6 to p-3 approx
-  const titleOpacity = useTransform(scrollY, [0, 60], [1, 0]);
-  const titleHeight = useTransform(scrollY, [0, 60], ['52px', '0px']);
-  const pillMarginTop = useTransform(scrollY, [0, 80], ['1rem', '0rem']); // mt-4 to mt-0
+  // Optimized Apple-style collapse with cubic-bezier easing for smoothness
+  const headerPadding = useTransform(scrollY, [0, 120], ['1.5rem', '0.75rem'], { clamp: true });
+  const titleOpacity = useTransform(scrollY, [0, 60], [1, 0], { clamp: true });
+  const titleHeight = useTransform(scrollY, [0, 80], ['auto', '0px'], { clamp: true });
+  const titleScale = useTransform(scrollY, [0, 80], [1, 0.95], { clamp: true });
+  const titleY = useTransform(scrollY, [0, 80], [0, -10], { clamp: true });
+  const pillMarginTop = useTransform(scrollY, [0, 100], ['1rem', '0rem'], { clamp: true });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -321,12 +323,18 @@ export default function CategoriesPage() {
             {/* Header & Filters */}
             <motion.div
               style={{ padding: headerPadding, top: 'calc(56px + env(safe-area-inset-top))' }}
-              className="bg-white lg:rounded-3xl shadow-sm border-b lg:border border-gray-100 sticky z-20"
+              className="bg-white lg:rounded-3xl shadow-sm border-b lg:border border-gray-100 sticky z-20 will-change-[padding]"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <motion.div
-                  style={{ height: titleHeight, opacity: titleOpacity }}
-                  className="transition-all duration-300 overflow-hidden lg:h-auto lg:mb-0 lg:opacity-100"
+                  style={{ 
+                    height: titleHeight, 
+                    opacity: titleOpacity,
+                    scale: titleScale,
+                    y: titleY,
+                    marginBottom: titleOpacity 
+                  }}
+                  className="overflow-hidden origin-top-left lg:h-auto lg:mb-0 lg:opacity-100 lg:scale-100 lg:translate-y-0 will-change-[height,opacity,transform]"
                 >
                   <h1 className="text-xl lg:text-4xl font-black text-gray-900 mb-1">
                     {selectedCategory === 'all' ? 'Бүх бараа' : categories.find(c => c.id === selectedCategory)?.name}
@@ -370,7 +378,7 @@ export default function CategoriesPage() {
               {/* Mobile Horizontal Category Pills (Alternative to Sidebar) */}
               <motion.div
                 style={{ marginTop: pillMarginTop }}
-                className="relative lg:hidden -mx-4 transition-all duration-300"
+                className="relative lg:hidden -mx-4"
               >
                 <div className="flex gap-2 px-4 overflow-x-auto scrollbar-hide pb-2 -mb-2">
                   <motion.button

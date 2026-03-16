@@ -52,6 +52,15 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
+        const storesCollection = await getCollection('stores'); 
+        const store = await storesCollection.findOne({ vendorId: userId }); 
+        if (!store) { 
+            return NextResponse.json({ error: 'Дэлгүүр олдсонгүй' }, { status: 404 }); 
+        } 
+        if (store.status !== 'active') { 
+            return NextResponse.json({ error: 'Таны дэлгүүр идэвхжээгүй байна. Админ зөвшөөрөхийг хүлээнэ үү.' }, { status: 403 }); 
+        }
+
         const body = await req.json();
         const { id, ...updateData } = body;
 

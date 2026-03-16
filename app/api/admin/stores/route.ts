@@ -89,6 +89,21 @@ export async function PUT(req: NextRequest) {
             console.error('Failed to notify vendor:', notifErr);
         }
 
+        const usersCollection = await getCollection('users'); 
+        const storeDoc = result as any; 
+
+        if (status === 'active') { 
+            await usersCollection.updateOne( 
+                { _id: new ObjectId(storeDoc.vendorId) }, 
+                { $set: { role: 'vendor' } } 
+            ); 
+        } else if (status === 'suspended') { 
+            await usersCollection.updateOne( 
+                { _id: new ObjectId(storeDoc.vendorId) }, 
+                { $set: { role: 'user' } } 
+            ); 
+        } 
+
         return NextResponse.json(result);
     } catch (error) {
         console.error('Store update error:', error);
