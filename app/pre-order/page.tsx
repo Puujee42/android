@@ -1,24 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, ArrowUpDown, SlidersHorizontal, X } from 'lucide-react';
 import PremiumProductGrid from '@/components/PremiumProductGrid';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/context/LanguageContext';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image: string | null;
-  category: string;
-  stockStatus: string;
-  createdAt: Date;
-  updatedAt: Date;
-  discount?: number;
-}
+import { useProducts } from '@/lib/hooks/useProducts';
+import { type Product } from '@/models/Product';
+import InfiniteScrollTrigger from '@/components/InfiniteScrollTrigger';
 
 type SortType = 'newest' | 'price-low' | 'price-high' | 'name-az';
 
@@ -26,35 +16,19 @@ export default function PreOrderPage() {
   const { t } = useTranslation();
   const { currency, convertPrice } = useLanguage();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Filter & Sort States
   const [sortBy, setSortBy] = useState<SortType>('name-az');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [showPriceFilter, setShowPriceFilter] = useState(false);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/products?limit=50');
-        const data = await response.json();
-        const allProducts: Product[] = data.products || [];
-        const preOrderProducts = allProducts.filter(p => p.stockStatus === 'pre-order');
-        setProducts(preOrderProducts);
-      } catch (error) {
-        // Error handling - could log to error tracking service in production
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
+  const { products, isLoading, isLoadingMore, isReachingEnd, size, setSize } = useProducts({
+    section: 'Захиалга',
+    minPrice: minPrice || undefined,
+    maxPrice: maxPrice || undefined
+  });
 
   // --- Filtering Logic ---
-
-  // Since we only have pre-order products, we just use the main products array
   let filteredProducts = [...products];
 
   // Apply price filter
@@ -79,11 +53,11 @@ export default function PreOrderPage() {
         return a.name.localeCompare(b.name);
       case 'newest':
       default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     }
   });
 
-  // Get min and max prices for the current filter (converted to current currency)
+  // Get min and max prices for suggestions
   const prices = filteredProducts.map(p => convertPrice(p.price));
   const suggestedMin = prices.length > 0 ? Math.floor(Math.min(...prices) / (currency === 'USD' ? 10 : 1000)) * (currency === 'USD' ? 10 : 1000) : 0;
   const suggestedMax = prices.length > 0 ? Math.ceil(Math.max(...prices) / (currency === 'USD' ? 10 : 1000)) * (currency === 'USD' ? 10 : 1000) : (currency === 'USD' ? 1000 : 1000000);
@@ -96,7 +70,7 @@ export default function PreOrderPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-gray-700 font-bold text-sm mb-4"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-600 font-bold text-sm mb-4"
           >
             <TrendingUp className="w-4 h-4" />
             <span>{t('nav', 'preOrder')}</span>
@@ -121,15 +95,13 @@ export default function PreOrderPage() {
 
         {/* Filter & Sort Bar */}
         <div className="flex items-center justify-end gap-4 mb-8 flex-wrap">
-          {/* Sort & Price Filter - Right */}
           <div className="flex items-center gap-3">
-            {/* Sort Dropdown */}
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortType)}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition-all duration-300 cursor-pointer"
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-orange-300 outline-none transition-all cursor-pointer"
               >
                 <option value="name-az">{t('filters', 'nameAZ')}</option>
                 <option value="price-low">{t('filters', 'priceLowHigh')}</option>
@@ -137,121 +109,54 @@ export default function PreOrderPage() {
               </select>
             </div>
 
-            {/* Price Filter Button */}
             <div className="relative">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowPriceFilter(!showPriceFilter)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 ${showPriceFilter || minPrice || maxPrice
-                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:border-orange-300'
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${showPriceFilter || minPrice || maxPrice
+                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
+                    : 'bg-white text-gray-700 border border-gray-200'
                   }`}
               >
                 <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
                 <span>{t('filters', 'price')}</span>
-                {(minPrice || maxPrice) && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded-full text-xs">1</span>
-                )}
               </motion.button>
 
-              {/* Price Filter Dropdown */}
               <AnimatePresence>
                 {showPriceFilter && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl shadow-orange-100/20 border border-orange-100/50 p-5 z-50"
+                    className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-5 z-50 text-gray-900"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                        <SlidersHorizontal className="w-4 h-4 text-orange-500" strokeWidth={1.5} />
-                        {t('filters', 'priceFilter')}
-                      </h3>
-                      <button
-                        onClick={() => setShowPriceFilter(false)}
-                        className="p-1 hover:bg-gray-100 rounded-full transition"
-                      >
-                        <X className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                      <h3 className="text-sm font-bold">{t('filters', 'priceFilter')}</h3>
+                      <button onClick={() => setShowPriceFilter(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                        <X className="w-4 h-4 text-gray-400" />
                       </button>
                     </div>
-
                     <div className="space-y-4">
-                      {/* Price Inputs */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('filters', 'minPrice')}</label>
-                          <input
-                            type="number"
-                            value={minPrice}
-                            onChange={(e) => setMinPrice(e.target.value)}
-                            placeholder={suggestedMin.toLocaleString()}
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('filters', 'maxPrice')}</label>
-                          <input
-                            type="number"
-                            value={maxPrice}
-                            onChange={(e) => setMaxPrice(e.target.value)}
-                            placeholder={suggestedMax.toLocaleString()}
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition"
-                          />
-                        </div>
+                        <input
+                          type="number"
+                          value={minPrice}
+                          onChange={(e) => setMinPrice(e.target.value)}
+                          placeholder="Min"
+                          className="w-full px-3 py-2 text-sm border rounded-lg outline-none focus:border-orange-500 text-gray-900"
+                        />
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(e.target.value)}
+                          placeholder="Max"
+                          className="w-full px-3 py-2 text-sm border rounded-lg outline-none focus:border-orange-500 text-gray-900"
+                        />
                       </div>
-
-                      {/* Quick Price Ranges */}
-                      <div>
-                        <p className="text-xs font-medium text-gray-600 mb-2">{t('filters', 'quickSelect')}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(currency === 'USD'
-                            ? [
-                              { label: '< $30', min: '', max: '100000' },
-                              { label: '$30 - $145', min: '100000', max: '500000' },
-                              { label: '$145 - $290', min: '500000', max: '1000000' },
-                              { label: '> $290', min: '1000000', max: '' },
-                            ]
-                            : [
-                              { label: '< 100,000₮', min: '', max: '100000' },
-                              { label: '100k - 500k₮', min: '100000', max: '500000' },
-                              { label: '500k - 1M₮', min: '500000', max: '1000000' },
-                              { label: '> 1,000,000₮', min: '1000000', max: '' },
-                            ]
-                          ).map((range) => (
-                            <button
-                              key={range.label}
-                              onClick={() => {
-                                setMinPrice(range.min);
-                                setMaxPrice(range.max);
-                              }}
-                              className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-300"
-                            >
-                              {range.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2 border-t border-gray-100">
-                        <button
-                          onClick={() => {
-                            setMinPrice('');
-                            setMaxPrice('');
-                          }}
-                          className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
-                        >
-                          {t('filters', 'clear')}
-                        </button>
-                        <button
-                          onClick={() => setShowPriceFilter(false)}
-                          className="flex-1 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg hover:shadow-orange-500/40 rounded-lg transition-all duration-300"
-                        >
-                          {t('filters', 'apply')}
-                        </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} className="flex-1 px-4 py-2 text-sm bg-gray-100 rounded-lg">{t('filters', 'clear')}</button>
+                        <button onClick={() => setShowPriceFilter(false)} className="flex-1 px-4 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg">{t('filters', 'apply')}</button>
                       </div>
                     </div>
                   </motion.div>
@@ -262,19 +167,27 @@ export default function PreOrderPage() {
         </div>
 
         {/* Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : sortedProducts.length > 0 ? (
-          <motion.div
-            key={sortBy}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PremiumProductGrid products={sortedProducts as any} />
-          </motion.div>
+          <>
+            <motion.div
+              key={sortBy}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PremiumProductGrid products={sortedProducts as any} />
+            </motion.div>
+            
+            <InfiniteScrollTrigger
+              onLoadMore={() => setSize(size + 1)}
+              hasMore={!isReachingEnd}
+              isLoading={isLoadingMore}
+            />
+          </>
         ) : (
           <div className="text-center py-20 text-gray-500">
             {t('product', 'noProductsPreorder')}

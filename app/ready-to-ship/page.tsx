@@ -7,18 +7,9 @@ import PremiumProductGrid from '@/components/PremiumProductGrid';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLanguage } from '@/context/LanguageContext';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image: string | null;
-  category: string;
-  stockStatus: string;
-  createdAt: Date;
-  updatedAt: Date;
-  discount?: number;
-}
+import { useProducts } from '@/lib/hooks/useProducts';
+import { type Product } from '@/models/Product';
+import InfiniteScrollTrigger from '@/components/InfiniteScrollTrigger';
 
 type SortType = 'newest' | 'price-low' | 'price-high' | 'name-az';
 
@@ -26,31 +17,17 @@ export default function ReadyToShipPage() {
   const { t } = useTranslation();
   const { currency, convertPrice } = useLanguage();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Filter & Sort States
   const [sortBy, setSortBy] = useState<SortType>('name-az');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [showPriceFilter, setShowPriceFilter] = useState(false);
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch('/api/products?limit=50');
-        const data = await response.json();
-        const allProducts: Product[] = data.products || [];
-        const readyProducts = allProducts.filter(p => p.stockStatus === 'in-stock');
-        setProducts(readyProducts);
-      } catch (error) {
-        // Error handling - could log to error tracking service in production
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
+  const { products, isLoading, isLoadingMore, isReachingEnd, size, setSize, error } = useProducts({
+    section: 'Бэлэн',
+    minPrice: minPrice || undefined,
+    maxPrice: maxPrice || undefined
+  });
 
   // --- Filtering Logic ---
 
@@ -79,7 +56,7 @@ export default function ReadyToShipPage() {
         return a.name.localeCompare(b.name);
       case 'newest':
       default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     }
   });
 
@@ -262,19 +239,27 @@ export default function ReadyToShipPage() {
         </div>
 
         {/* Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : sortedProducts.length > 0 ? (
-          <motion.div
-            key={sortBy}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <PremiumProductGrid products={sortedProducts as any} />
-          </motion.div>
+          <>
+            <motion.div
+              key={sortBy}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PremiumProductGrid products={sortedProducts as any} />
+            </motion.div>
+            
+            <InfiniteScrollTrigger
+              onLoadMore={() => setSize(size + 1)}
+              hasMore={!isReachingEnd}
+              isLoading={isLoadingMore}
+            />
+          </>
         ) : (
           <div className="text-center py-20 text-gray-500">
             {t('product', 'noProductsReady')}

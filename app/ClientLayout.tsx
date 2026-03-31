@@ -14,9 +14,11 @@ const swrDefaults = {
 
 import FloatingChatButton from '@/components/FloatingChatButton';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useBackButton } from '@/hooks/useBackButton';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   usePushNotifications();
+  useBackButton();
   return (
     <SWRConfig value={swrDefaults}>
       <LanguageProvider>

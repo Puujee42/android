@@ -103,16 +103,15 @@ export default function ProductDetailClient({
   const displayInventory = selectedVariant
     ? selectedVariant.inventory
     : product.inventory ?? 0;
-  const isOutOfStock = product.options?.length
-    ? !selectedVariant || displayInventory <= 0
-    : displayInventory <= 0;
 
-  const canAddToCart =
-    !isOutOfStock &&
-    (!product.options?.length ||
-      (product.options.every((o: any) => selectedOptions[o.name]) &&
-        selectedVariant &&
-        selectedVariant.inventory > 0));
+  // truly out of stock if even the main product has no inventory
+  const isProductOutOfStock = (product.inventory ?? 0) <= 0 && (!product.variants?.length || product.variants.every((v: any) => v.inventory <= 0));
+  
+  // variant-specific out of stock
+  const isVariantOutOfStock = !!selectedVariant && selectedVariant.inventory <= 0;
+
+  const isOutOfStock = isProductOutOfStock || isVariantOutOfStock;
+  const canAddToCart = !isOutOfStock;
 
   const { addItem, toggleAllSelection } = useCartStore();
   const { t } = useTranslation();

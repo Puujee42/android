@@ -17,7 +17,7 @@ import MobileHero from '@/components/MobileHero';
 import MobileProductGrid from '@/components/MobileProductGrid';
 import InfiniteScrollTrigger from '@/components/InfiniteScrollTrigger';
 
-type FilterType = 'all' | 'Бэлэн' | 'Захиалга';
+type FilterType = 'all' | 'Бэлэн' | 'Захиалга' | 'Шинэ' | 'Хямдрал';
 type SortType = 'newest' | 'price-low' | 'price-high' | 'name-az';
 
 export default function HomePage() {
@@ -49,11 +49,13 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Convert UI filter to API stockStatus
+  // Convert UI filter to API stockStatus (legacy compatibility) or section
   const stockStatus = activeFilter === 'Бэлэн' ? 'in-stock' : activeFilter === 'Захиалга' ? 'pre-order' : undefined;
+  const section = (activeFilter !== 'all' && activeFilter !== 'Бэлэн' && activeFilter !== 'Захиалга') ? activeFilter : undefined;
 
   const { products: allProducts, isLoading: loading, isLoadingMore, isReachingEnd, size, setSize, error } = useProducts({
     stockStatus,
+    section,
     minPrice: minPrice || undefined,
     maxPrice: maxPrice || undefined
   });
@@ -64,10 +66,13 @@ export default function HomePage() {
   // Client-side mapping is now simplified since the server handles the core filtering
   let filteredProducts = [...allProducts];
 
-  // If there are other client-side specific sections (like 'Шинэ' which might not be a stock status)
-  // we can still keep this fallback, but for 'Бэлэн' and 'Захиалга' it's already handled by the API.
+  // Additional safety fallback if stockStatus filtering above doesn't cover all section cases
   if (activeFilter !== 'all' && activeFilter !== 'Бэлэн' && activeFilter !== 'Захиалга') {
     filteredProducts = allProducts.filter((p: Product) => p.sections?.includes(activeFilter as string));
+  } else if (activeFilter === 'Бэлэн') {
+    filteredProducts = allProducts.filter((p: Product) => p.stockStatus === 'in-stock' || p.sections?.includes('Бэлэн'));
+  } else if (activeFilter === 'Захиалга') {
+    filteredProducts = allProducts.filter((p: Product) => p.stockStatus === 'pre-order' || p.sections?.includes('Захиалга'));
   }
 
   // Apply price filter
@@ -149,13 +154,13 @@ export default function HomePage() {
           >
             {/* Category Tabs Row */}
             <div className="flex items-center gap-2 px-4 pt-3 pb-1 overflow-x-auto scrollbar-hide">
-              {(['all', 'Бэлэн', 'Захиалга'] as const).map((f) => (
+              {(['all', 'Шинэ', 'Бэлэн', 'Захиалга', 'Хямдрал'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setActiveFilter(f as FilterType)}
-                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${activeFilter === f
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${activeFilter === f
                       ? 'bg-[#FF5000] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                     }`}
                 >
                   {f === 'all' ? 'Бүгд' : f}
@@ -268,18 +273,19 @@ export default function HomePage() {
                 </div>
               </motion.button>
 
-              {['Бэлэн', 'Захиалга'].map((section) => {
-                const Icon = section === 'Бэлэн' ? Package
-                  : section === 'Захиалга' ? Clock
+              {['Шинэ', 'Бэлэн', 'Захиалга', 'Хямдрал'].map((sectionTitle) => {
+                const Icon = sectionTitle === 'Бэлэн' ? Package
+                  : sectionTitle === 'Захиалга' ? Clock
+                    : sectionTitle === 'Шинэ' ? Sparkles
                     : Tag;
-                const isActive = activeFilter === section;
+                const isActive = activeFilter === sectionTitle;
 
                 return (
                   <motion.button
-                    key={section}
+                    key={sectionTitle}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setActiveFilter(section as any)}
+                    onClick={() => setActiveFilter(sectionTitle as any)}
                     className={`px-4 py-2 lg:px-5 lg:py-2.5 rounded-2xl font-bold text-xs lg:text-sm transition-all duration-300 whitespace-nowrap ${isActive
                       ? 'bg-[#FF5000] text-white shadow-lg shadow-orange-500/30'
                       : 'bg-white/50 text-gray-600 hover:bg-white border border-gray-100'
@@ -287,7 +293,7 @@ export default function HomePage() {
                   >
                     <div className="flex items-center gap-1.5 lg:gap-2">
                       <Icon className="w-3 h-3 lg:w-3.5 lg:h-3.5" strokeWidth={1.2} />
-                      <span>{section}</span>
+                      <span>{sectionTitle}</span>
                     </div>
                   </motion.button>
                 );

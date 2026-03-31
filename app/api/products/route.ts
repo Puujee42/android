@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const stockStatus = searchParams.get('stockStatus');
+    const section = searchParams.get('section');
 
     const products = await getCollection('products');
     const filter: Record<string, any> = {};
@@ -23,7 +24,35 @@ export async function GET(request: NextRequest) {
 
     const conditions: object[] = [];
 
-    if (stockStatus) {
+    // Unified Section and Stock Status Filtering
+    if (section && section !== 'all') {
+      if (section === 'Бэлэн') {
+        conditions.push({
+          $or: [
+            { sections: 'Бэлэн' },
+            { stockStatus: 'in-stock' },
+            { stockStatus: { $exists: false } },
+            { stockStatus: null }
+          ]
+        });
+      } else if (section === 'Захиалга') {
+        conditions.push({
+          $or: [
+            { sections: 'Захиалга' },
+            { stockStatus: 'pre-order' }
+          ]
+        });
+      } else if (section === 'Хямдрал') {
+        conditions.push({
+          $or: [
+            { sections: 'Хямдрал' },
+            { discount: { $gt: 0 } }
+          ]
+        });
+      } else {
+        filter.sections = section;
+      }
+    } else if (stockStatus) {
       if (stockStatus === 'in-stock') {
         conditions.push({
           $or: [

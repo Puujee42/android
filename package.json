@@ -6,19 +6,22 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "clean": "taskkill /F /IM java.exe /T & taskkill /F /IM gradle.exe /T"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",
     "@ai-sdk/openai": "^3.0.41",
     "@ai-sdk/react": "^3.0.99",
     "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",
     "@capacitor/camera": "^8.0.2",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0",
     "@capacitor/push-notifications": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.1",
     "@clerk/nextjs": "^7.0.5",
     "@google/generative-ai": "^0.24.1",
     "@livekit/components-react": "^2.9.19",
