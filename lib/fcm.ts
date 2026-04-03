@@ -119,3 +119,78 @@ export async function sendPushToAllUsers({
         console.error('FCM Error:', error);
     }
 }
+
+/**
+ * Send a push notification to a specific user by their MongoDB userId.
+ */
+export async function sendPushToUser({
+    userId,
+    title,
+    body,
+    imageUrl,
+    data,
+}: {
+    userId: string;
+    title: string;
+    body: string;
+    imageUrl?: string;
+    data?: Record<string, string>;
+}) {
+    try {
+        const firebase = await getFirebaseAdmin();
+        if (!firebase) return;
+
+        const { ObjectId } = await import('mongodb');
+        const usersCollection = await getCollection<User>('users');
+        const user = await usersCollection.findOne(
+            { _id: new ObjectId(userId) },
+            { projection: { pushTokens: 1 } }
+        );
+
+        if (!user?.pushTokens || user.pushTokens.length === 0) {
+            console.log(`FCM: No tokens for user ${userId}`);
+            return;
+        }
+
+        const tokens = user.pushTokens.map((pt: PushToken) => pt.token);
+
+        const message = {
+            notification: {
+                title,
+                body,
+                ...(imageUrl ? { imageUrl } : {}),
+            },
+            data: data || {},
+            tokens,
+        };
+
+        const response = await firebase.messaging().sendEachForMulticast(message);
+
+        // Cleanup invalid tokens
+        if (response.failureCount > 0) {
+            const tokensToRemove: string[] = [];
+            response.responses.forEach((resp: any, idx: number) => {
+                if (!resp.success) {
+                    const errorCode = resp.error?.code;
+                    if (
+                        errorCode === 'messaging/invalid-registration-token' ||
+                        errorCode === 'messaging/registration-token-not-registered'
+                    ) {
+                        tokensToRemove.push(tokens[idx]);
+                    }
+                }
+            });
+
+            if (tokensToRemove.length > 0) {
+                await usersCollection.updateMany(
+                    {},
+                    { $pull: { pushTokens: { token: { $in: tokensToRemove } } } } as any
+                );
+            }
+        }
+
+        console.log(`FCM: Sent to user ${userId} (${tokens.length} devices)`);
+    } catch (error) {
+        console.error(`FCM Error (user ${userId}):`, error);
+    }
+}

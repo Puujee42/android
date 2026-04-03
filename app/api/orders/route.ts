@@ -272,6 +272,17 @@ export async function PATCH(req: NextRequest) {
         link: '/orders',
         createdAt: new Date()
       });
+
+      // Send FCM push to customer's phone (non-blocking)
+      if (order.userId !== 'guest') {
+        const { sendPushToUser } = await import('@/lib/fcm');
+        sendPushToUser({
+          userId: order.userId,
+          title: '❌ Захиалга цуцлагдлаа',
+          body: 'Таны захиалга амжилттай цуцлагдлаа.',
+          data: { url: '/orders' },
+        }).catch(err => console.error('FCM cancel push error:', err));
+      }
     } catch (error) {
       console.error('Failed to send cancellation notification:', error);
     }

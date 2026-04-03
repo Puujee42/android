@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     url: 'https://soyol-delta.vercel.app',
-    androidScheme: 'https'
+    androidScheme: 'https',
+    errorPath: '/offline.html',
   },
   plugins: {
     PushNotifications: {

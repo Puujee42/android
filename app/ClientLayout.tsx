@@ -13,6 +13,7 @@ const swrDefaults = {
 };
 
 import FloatingChatButton from '@/components/FloatingChatButton';
+import OfflineBanner from '@/components/OfflineBanner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useBackButton } from '@/hooks/useBackButton';
 
@@ -24,6 +25,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <LanguageProvider>
         <AuthProvider>
           <ErrorBoundary>
+            <OfflineBanner />
             {children}
             <FloatingChatButton />
             <Toaster position="top-right" reverseOrder={false} />
